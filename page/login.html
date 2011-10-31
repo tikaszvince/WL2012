@@ -1,0 +1,20 @@
+<form action="<?php echo $base ?>/tagok/belepes" accept-charset="UTF-8" method="post" id="user-login-page">
+	<div>
+		<div class="form-item" id="edit-name-wrapper">
+			<label for="edit-name">Felhasználói név: <span class="form-required" title="Szükséges mező.">*</span></label>
+			<input type="text" maxlength="60" name="name" id="edit-name" size="50" value="" class="form-text required">
+			<div class="description">A webhelyen regisztrált felhasználói név.</div>
+		</div>
+		<div class="form-item" id="edit-pass-wrapper">
+			<label for="edit-pass">Jelszó: <span class="form-required" title="Szükséges mező.">*</span></label>
+			<input type="password" name="pass" id="edit-pass" maxlength="128" size="50" class="form-text required">
+			<div class="description">A felhasználói névhez tartozó jelszó.</div>
+		</div>
+		<input type="hidden" name="form_build_id" id="form-2ed457eaf172ce4e46fb3c67b25ea741" value="form-2ed457eaf172ce4e46fb3c67b25ea741">
+		<input type="hidden" name="form_id" id="edit-user-login" value="user_login">
+		<input type="submit" name="op" id="edit-submit" value="Belépés" class="form-submit">
+	</div>
+	<div>
+		<a href="<?php echo $base; ?>/tagok/jelszo">Elfelejtett jelszó</a>
+	</div>
+</form>

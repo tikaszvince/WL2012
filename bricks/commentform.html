@@ -1,0 +1,28 @@
+<div class="content">
+	<form action="#" accept-charset="UTF-8" method="post" id="comment-form">
+		<div>
+			<div class="form-item comment-user-name">
+				<label>Név: </label>
+				<a href="<?php echo $base; ?>/tagok/934" title="Felhasználói profil megtekintése.">tiku</a>
+			</div>
+			<div class="form-item" id="edit-subject-wrapper">
+				<label for="edit-subject">A hozzászólás tárgya: </label><br/>
+				<input type="text" maxlength="64" name="subject" id="edit-subject" size="60" value="" class="form-text">
+			</div>
+			<div class="form-item" id="edit-comment-wrapper">
+				<label for="edit-comment">A hozzászólás szövege: <span class="form-required" title="Szükséges mező.">*</span></label>
+				<textarea cols="60" rows="15" name="comment" id="edit-comment" class="form-textarea resizable required"></textarea>
+				<div class="description">
+					<strong>A szerkesztőség fenntartja a <a href="<?php echo $base; ?>/weblabor/segitseg#forumok">moderálás</a> jogát.</strong> BBCode formázás
+					használható. Például: <strong>[b]</strong>vastag[/b], <strong>[i]</strong>dőlt[/i], <strong>[url=http://...]</strong>link[/url],
+					<strong>[quote]</strong>idézet[/quote], <strong>[colorer=css]</strong>css kód[/colorer].
+					<a href="<?php echo $base; ?>/bekuldes/tippek">További lehetőségek</a>
+				</div>
+			</div>
+			<input type="hidden" name="form_build_id" id="form-8dc69336fce02375188036551fc343d3" value="form-8dc69336fce02375188036551fc343d3">
+			<input type="hidden" name="form_token" id="edit-form-token" value="006d8d570aa6517cfb8710f54a1298de">
+			<input type="hidden" name="form_id" id="edit-comment-form" value="comment_form">
+			<input type="submit" name="op" id="edit-preview" value="Előnézet" class="form-submit">
+		</div>
+	</form>
+</div>

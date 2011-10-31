@@ -1,0 +1,631 @@
+<div id="content">
+	<h2 class="title" id="page-title">Bevezetés a Sphinx keresőmotor használatába</h2>
+	<div class="tabs clear-block"><ul class="tabs primary">
+		<li class="active"><a href="<?php echo $base; ?>/cikkek/sphinx-keresomotor-bevezetes" class="active">Megtekintés</a></li>
+		<li><a href="<?php echo $base; ?>/node/109005/revisions">Verziók</a></li>
+	</ul></div>
+	
+	<div id="content-content" class="clear-block">
+		<div class="node clear-block article">
+			<div class="meta">
+				<a href="<?php echo $base; ?>/tagok/25076" title="Felhasználói profil megtekintése." class="wlavatar" style="background-image: url(http://weblabor.hu/misc/avatar/14.gif)">_subi_</a>
+				· <span title="A megjelenés ideje: 2011. Jún. 6. (H), 10.27">Jún. 6. (H), 10.27</span>
+				<div class="share links"><ul class="links inline">
+					<li class="retweet first"><a href="http://twitter.com/home/?status=Bevezet%C3%A9s+a+Sphinx+keres%C5%91motor+haszn%C3%A1lat%C3%A1ba+http%3A%2F%2Ftinyurl.com%2F3l6as82+via+%40weblaborhu" title="Beküldöm a Twitterre." class="link-external">csirip</a></li>
+					<li class="comment_add last"><a href="<?php echo $base; ?>/cikkek/sphinx-keresomotor-bevezetes/hozzaszolas#comment-form" title="A tartalomhoz kapcsolódó vélemények, gondolatok beküldése.">Új hozzászólás</a></li>
+				</ul></div>
+			</div>
+			<div class="content">
+				<p>A jól használható kereső gyakran a legfontosabb része a honlapnak; gyakran önmagában meghatározza annak sikerességét,
+				avagy sikertelenségét. A szöveges keresések megtámogatására ideális eszköz lehet a <em>Sphinx</em>.</p>
+				<h3>Mi a Sphinx keresőmotor?</h3>
+				<p>A Sphinx egy úgynevezett full-text keresőmotor, ami rendkívül alkalmas nagyobb mennyiségű szövegben történő keresésre.
+				A puszta teljesítményadatok igen impozánsak:</p>
+				<ul>
+					<li>50-100x gyorsabb indexelés mint a MySQL full-text esetében, és 4-10x gyorsabb, mint más külső keresőmotorok esetében;</li>
+					<li>a keresési sebesség a keresési módtól függően akár 500x gyorsabb lehet a MySQL full-textnél (különösen nagy mennyiségű
+					adat és <code>GROUP BY</code> esetén), de más külső keresőmotoroktól is 2x gyorsabb;</li>
+				</ul>
+				<p>A kitűnő teljesítmény mellett mind vertikálisan, mind horizontálisan jól skálázható.</p>
+				<h3>Mikor, és mire érdemes használni a Sphinxet?</h3>
+				<p>Ha nagyobb mennyiségű szövegben keresünk, akkor mindenképpen, de jól jöhet, akkor is, ha címke szerint szeretnénk
+				megjeleníteni a keresési eredményeket, továbbá jó lehet azokban az esetekben is, amikor az adott szövegkörnyezet alapján a minél
+				relevánsabb találatok megjelenítése a cél, ugyanis a nyers teljesítmény mellett ez a Sphinx másik erőssége; számtalan keresési
+				lehetőséget, és többféle súlyozási algoritmust kínál.</p>
+				<h3>Mire nem jó a Sphinx?</h3>
+				<p>A Sphinx nem egy teljes adatbázis-kezelő, funkciói a szöveges keresésekre vannak kihegyezve, a nagyon speciális esetektől
+				eltekintve a meglévő adatbázis-kezelő mellett szokás alkalmazni. Néhány egyszerű példán keresztül igyekszem bemutatni, miként
+				kezdhetjük el a Sphinx használatát. A Sphinxről főleg a PHP–MySQL viszonyában fogok szólni, ám az itt leírtak nagyrészt általános
+				érvényűek.</p>
+				<h3>Környezet kialakítása</h3>
+				<p>Első körben azt nézzük meg, miként lehet felállítani a windowsos tesztkörnyezetet. Megjegyzem, nincsen túl sok különbség
+				a Windowson és Linuxon való futtatás között. Ha már tisztában vagyunk az alapvető működéssel, percek alatt belőhető a Sphinx
+				az éles (Linux) rendszerben is.</p>
+				<p>Az első lépés a <a href="http://sphinxsearch.com/downloads/beta/" class="link-external">windowsos állományok letöltése</a>.
+				Ezután az állományokat egyszerűen helyezzük el a <i>C:\Sphinx</i> könyvtárban.</p>
+				<p><strong>A tényleges keresések előtt a következő fő lépéseket kell megtennünk.</strong></p>
+				<ol>
+					<li>Létrehozunk néhány minta táblát az adatbázisban.</li>
+					<li>Létre kell hozni egy konfigurációs fájlt, ami az indexelő alkalmazás és a kereső démon is használni fog. (A config
+						fájlok részére létrehoztam egy külön <i>conf/</i> könyvtárat.)</li>
+					<li>Létre kell hozni egy index állományt az indexer segítségével.</li>
+					<li>El kell indítani a searchd-t, ami majd a kereséseket végzi.</li>
+					<li>Létrehozunk egy php fájlt a teszt keresésékre.</li>
+				</ol>
+				<p>A Sphinx indexet létrehozhatjuk egy XML állományból vagy mint a példánkban is, közvetlenül adatbázisból. Az index
+				forrásaként ezeket a leegyszerűsített táblákat és a hozzájuk tartozó adatokat használjuk:</p>
+				<div class="dp-highlighter">
+					<div class="bar"></div>
+					<ol start="1" class="dp-sql">
+						<li class="alt"><span><span class="keyword">CREATE</span><span>&nbsp;</span><span class="keyword">TABLE</span><span>&nbsp;IF&nbsp;</span><span class="op">NOT</span><span>&nbsp;EXISTS&nbsp;`product`&nbsp;(&nbsp;&nbsp;</span></span></li>
+						<li class=""><span>&nbsp;&nbsp;&nbsp;&nbsp;`id`&nbsp;<span class="keyword">int</span><span>(11)&nbsp;unsigned&nbsp;</span><span class="op">NOT</span><span>&nbsp;</span><span class="op">NULL</span><span>,&nbsp;&nbsp;</span></span></li>
+						<li class="alt"><span>&nbsp;&nbsp;&nbsp;&nbsp;`<span class="keyword">name</span><span>`&nbsp;</span><span class="keyword">varchar</span><span>(255)&nbsp;</span><span class="op">NOT</span><span>&nbsp;</span><span class="op">NULL</span><span>,&nbsp;&nbsp;</span></span></li>
+						<li class=""><span>&nbsp;&nbsp;&nbsp;&nbsp;`category_id`&nbsp;<span class="keyword">int</span><span>(11)&nbsp;unsigned&nbsp;</span><span class="op">NOT</span><span>&nbsp;</span><span class="op">NULL</span><span>,&nbsp;&nbsp;</span></span></li>
+						<li class="alt"><span>&nbsp;&nbsp;&nbsp;&nbsp;`score`&nbsp;<span class="keyword">float</span><span>&nbsp;</span><span class="keyword">DEFAULT</span><span>&nbsp;0,&nbsp;&nbsp;</span></span></li>
+						<li class=""><span>&nbsp;&nbsp;&nbsp;&nbsp;`created_at`&nbsp;<span class="keyword">timestamp</span><span>&nbsp;</span><span class="op">NOT</span><span>&nbsp;</span><span class="op">NULL</span><span>&nbsp;</span><span class="keyword">DEFAULT</span><span>&nbsp;</span><span class="func">CURRENT_TIMESTAMP</span><span>&nbsp;&nbsp;</span></span></li>
+						<li class="alt"><span>)&nbsp;ENGINE=InnoDB&nbsp;<span class="keyword">DEFAULT</span><span>&nbsp;CHARSET=utf8;&nbsp;&nbsp;</span></span></li>
+						<li class=""><span>&nbsp;&nbsp;&nbsp;</span></li>
+						<li class="alt"><span><span class="keyword">CREATE</span><span>&nbsp;</span><span class="keyword">TABLE</span><span>&nbsp;IF&nbsp;</span><span class="op">NOT</span><span>&nbsp;EXISTS&nbsp;`tag`&nbsp;(&nbsp;&nbsp;</span></span></li>
+						<li class=""><span>&nbsp;&nbsp;&nbsp;&nbsp;`id`&nbsp;<span class="keyword">int</span><span>(11)&nbsp;unsigned&nbsp;</span><span class="op">NOT</span><span>&nbsp;</span><span class="op">NULL</span><span>,&nbsp;&nbsp;</span></span></li>
+						<li class="alt"><span>&nbsp;&nbsp;&nbsp;&nbsp;`<span class="keyword">name</span><span>`&nbsp;</span><span class="keyword">varchar</span><span>(255)&nbsp;</span><span class="op">NOT</span><span>&nbsp;</span><span class="op">NULL</span><span>&nbsp;&nbsp;</span></span></li>
+						<li class=""><span>)&nbsp;ENGINE=InnoDB&nbsp;<span class="keyword">DEFAULT</span><span>&nbsp;CHARSET=utf8;&nbsp;&nbsp;</span></span></li>
+						<li class="alt"><span>&nbsp;&nbsp;&nbsp;</span></li>
+						<li class=""><span><span class="keyword">CREATE</span><span>&nbsp;</span><span class="keyword">TABLE</span><span>&nbsp;IF&nbsp;</span><span class="op">NOT</span><span>&nbsp;EXISTS&nbsp;`_product_tag`&nbsp;(&nbsp;&nbsp;</span></span></li>
+						<li class="alt"><span>&nbsp;&nbsp;&nbsp;&nbsp;`product_id`&nbsp;<span class="keyword">int</span><span>(11)&nbsp;unsigned&nbsp;</span><span class="op">NOT</span><span>&nbsp;</span><span class="op">NULL</span><span>,&nbsp;&nbsp;</span></span></li>
+						<li class=""><span>&nbsp;&nbsp;&nbsp;&nbsp;`tag_id`&nbsp;<span class="keyword">int</span><span>(11)&nbsp;unsigned&nbsp;</span><span class="op">NOT</span><span>&nbsp;</span><span class="op">NULL</span><span>&nbsp;&nbsp;</span></span></li>
+						<li class="alt"><span>)&nbsp;ENGINE=InnoDB&nbsp;<span class="keyword">DEFAULT</span><span>&nbsp;CHARSET=utf8;&nbsp;&nbsp;</span></span></li>
+						<li class=""><span>&nbsp;&nbsp;</span></li>
+						<li class="alt"><span><span class="keyword">INSERT</span><span>&nbsp;</span><span class="keyword">INTO</span><span>&nbsp;product&nbsp;(id,&nbsp;</span><span class="keyword">name</span><span>,&nbsp;category_id,&nbsp;score)&nbsp;VALUE&nbsp;&nbsp;</span></span></li>
+						<li class=""><span>(1,&nbsp;<span class="string">'Marhahúsos&nbsp;kutyatáp'</span><span>,&nbsp;1,&nbsp;5.2),&nbsp;&nbsp;</span></span></li>
+						<li class="alt"><span>(2,&nbsp;<span class="string">'Marhahúsos&nbsp;macskatáp'</span><span>,&nbsp;2,&nbsp;7.1),&nbsp;&nbsp;</span></span></li>
+						<li class=""><span>(3,&nbsp;<span class="string">'Vitamin&nbsp;tabletta&nbsp;kutyának'</span><span>,&nbsp;1,&nbsp;5.1),&nbsp;&nbsp;</span></span></li>
+						<li class="alt"><span>(4,&nbsp;<span class="string">'Dog&nbsp;Stop&nbsp;távoltartó&nbsp;spray'</span><span>,&nbsp;1,&nbsp;3.2),&nbsp;&nbsp;</span></span></li>
+						<li class=""><span>(5,&nbsp;<span class="string">'Gyógysampon&nbsp;kutyának'</span><span>,&nbsp;1,&nbsp;5),&nbsp;&nbsp;</span></span></li>
+						<li class="alt"><span>(6,&nbsp;<span class="string">'Csonterősítő&nbsp;tabletta&nbsp;kutyának'</span><span>,&nbsp;1,&nbsp;4.9),&nbsp;&nbsp;</span></span></li>
+						<li class=""><span>(7,&nbsp;<span class="string">'Alomlapát'</span><span>,&nbsp;2,&nbsp;6.6),&nbsp;&nbsp;</span></span></li>
+						<li class="alt"><span>(8,&nbsp;<span class="string">'Vitamin&nbsp;tabletta&nbsp;macskának'</span><span>,&nbsp;2,&nbsp;7.2),&nbsp;&nbsp;</span></span></li>
+						<li class=""><span>(9,&nbsp;<span class="string">'Játék&nbsp;labda'</span><span>,&nbsp;2,&nbsp;7.7),&nbsp;&nbsp;</span></span></li>
+						<li class="alt"><span>(10,&nbsp;<span class="string">'Őrölt&nbsp;száraztáp'</span><span>,&nbsp;1,&nbsp;9.4);&nbsp;&nbsp;</span></span></li>
+						<li class=""><span>&nbsp;&nbsp;&nbsp;</span></li><li class="alt"><span><span class="keyword">INSERT</span><span>&nbsp;</span><span class="keyword">INTO</span><span>&nbsp;tag&nbsp;(id,&nbsp;</span><span class="keyword">name</span><span>)&nbsp;</span><span class="keyword">VALUES</span><span>&nbsp;&nbsp;</span></span></li>
+						<li class=""><span>(1,&nbsp;<span class="string">'táp'</span><span>),&nbsp;&nbsp;</span></span></li>
+						<li class="alt"><span>(2,&nbsp;<span class="string">'vitamin'</span><span>),&nbsp;&nbsp;</span></span></li>
+						<li class=""><span>(3,&nbsp;<span class="string">'játék'</span><span>),&nbsp;&nbsp;</span></span></li>
+						<li class="alt"><span>(4,&nbsp;<span class="string">'kutya'</span><span>),&nbsp;&nbsp;</span></span></li>
+						<li class=""><span>(5,&nbsp;<span class="string">'macska'</span><span>);&nbsp;&nbsp;</span></span></li>
+						<li class="alt"><span>&nbsp;&nbsp;&nbsp;</span></li>
+						<li class=""><span><span class="keyword">INSERT</span><span>&nbsp;</span><span class="keyword">INTO</span><span>&nbsp;_product_tag&nbsp;(product_id,&nbsp;tag_id)&nbsp;</span><span class="keyword">VALUES</span><span>&nbsp;&nbsp;</span></span></li>
+						<li class="alt"><span>(1,1),&nbsp;&nbsp;</span></li>
+						<li class=""><span>(1,4),&nbsp;&nbsp;</span></li>
+						<li class="alt"><span>(2,1),&nbsp;&nbsp;</span></li>
+						<li class=""><span>(2,5),&nbsp;&nbsp;</span></li>
+						<li class="alt"><span>(3,2),&nbsp;&nbsp;</span></li>
+						<li class=""><span>(3,4),&nbsp;&nbsp;</span></li>
+						<li class="alt"><span>(4,4),&nbsp;&nbsp;</span></li>
+						<li class=""><span>(5,4),&nbsp;&nbsp;</span></li>
+						<li class="alt"><span>(6,4),&nbsp;&nbsp;</span></li>
+						<li class=""><span>(7,5),&nbsp;&nbsp;</span></li>
+						<li class="alt"><span>(8,2),&nbsp;&nbsp;</span></li>
+						<li class=""><span>(8,5),&nbsp;&nbsp;</span></li>
+						<li class="alt"><span>(10,1),&nbsp;&nbsp;</span></li>
+						<li class=""><span>(10,4);&nbsp;&nbsp;</span></li>
+					</ol>
+				</div>
+				<pre class="sql:code" style="display: none; "><code class="language-sql">
+					CREATE TABLE IF NOT EXISTS `product` (
+`id` int(11) unsigned NOT NULL,
+`name` varchar(255) NOT NULL,
+`category_id` int(11) unsigned NOT NULL,
+`score` float DEFAULT 0,
+`created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TABLE IF NOT EXISTS `tag` (
+`id` int(11) unsigned NOT NULL,
+`name` varchar(255) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TABLE IF NOT EXISTS `_product_tag` (
+`product_id` int(11) unsigned NOT NULL,
+`tag_id` int(11) unsigned NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+INSERT INTO product (id, name, category_id, score) VALUE
+(1, 'Marhahúsos kutyatáp', 1, 5.2),
+(2, 'Marhahúsos macskatáp', 2, 7.1),
+(3, 'Vitamin tabletta kutyának', 1, 5.1),
+(4, 'Dog Stop távoltartó spray', 1, 3.2),
+(5, 'Gyógysampon kutyának', 1, 5),
+(6, 'Csonterősítő tabletta kutyának', 1, 4.9),
+(7, 'Alomlapát', 2, 6.6),
+(8, 'Vitamin tabletta macskának', 2, 7.2),
+(9, 'Játék labda', 2, 7.7),
+(10, 'Őrölt száraztáp', 1, 9.4);
+
+INSERT INTO tag (id, name) VALUES
+(1, 'táp'),
+(2, 'vitamin'),
+(3, 'játék'),
+(4, 'kutya'),
+(5, 'macska');
+
+INSERT INTO _product_tag (product_id, tag_id) VALUES
+(1,1),
+(1,4),
+(2,1),
+(2,5),
+(3,2),
+(3,4),
+(4,4),
+(5,4),
+(6,4),
+(7,5),
+(8,2),
+(8,5),
+(10,1),
+(10,4);
+				</code></pre>
+				<p>Ezek a táblák a könnyebb érthetőség végett a lehető legegyszerűbb szerkezetűek, nincsenek indexek,
+				idegen kulcsok stb. Ahogy a táblákból is látszik, egy webáruházas példán keresztül mutatom be a Sphinx használatát.</p>
+				<p>Így néz ki a konfigurációs állomány:</p>
+				<div class="sourcecode">
+					<pre class="conf:code"><code class="language-conf">source sphinx_test
+{
+type         	= mysql
+sql_host     	= localhost
+sql_user     	=
+sql_pass     	=
+sql_db       	= sphinx_test
+sql_query_pre   = SET NAMES utf8
+sql_query    	= \
+SELECT pr.id, MIN(pr.name) AS name, MIN(pr.name) AS name_f, \
+MIN(pr.category_id) AS category_id, MIN(pr.score) AS score, \
+GROUP_CONCAT(tag.name) AS tags, \
+UNIX_TIMESTAMP(MIN(pr.created_at)) AS created_at \
+FROM product AS pr \
+LEFT JOIN _product_tag AS pt ON pr.id = pt.product_id \
+LEFT JOIN tag ON pt.tag_id = tag.id \
+GROUP BY pr.id
+
+sql_attr_string		= name
+sql_attr_uint		= category_id
+sql_attr_float		= score
+sql_attr_timestamp	= created_at
+}
+
+index providers
+{
+source			= sphinx_test
+path			= C:\Sphinx\data\sphinx_test
+docinfo			= extern
+charset_type    = utf-8
+charset_table	= 0..9, A..Z-&gt;a..z, a..z, -, \
+U+00C1-&gt;U+00E1, U+00C9-&gt;U+00E9, U+00CD-&gt;U+00ED, \
+U+00D3-&gt;U+00F3, U+00D6-&gt;U+00F6, U+0150-&gt;U+0151, \
+U+00DA-&gt;U+00FA, U+00DC-&gt;U+00FC, U+0170-&gt;U+0171, \
+U+00E1, U+00E9, U+00ED, U+00F3, U+00F6, U+0151, \
+U+00FA, U+00FC, U+0171
+min_word_len	= 2
+enable_star		= 1
+min_prefix_len	= 2
+}
+
+indexer
+{
+mem_limit    	= 32M
+}
+
+# searchd options (used by search daemon)
+searchd
+{
+listen			= 9310
+log    			= C:\Sphinx\data\searchd.log
+query_log    	= C:\Sphinx\data\query.log
+max_children	= 30
+pid_file		= C:\Sphinx\data\searchd.pid
+}
+					</code></pre>
+				</div>
+				<p>Mit is tartalmaz a konfiguráció?</p>
+				<p>Az első részben állítjuk be a forrás típusát (MySQL), valamint megadjuk a lekérdezést, ami előállítja az
+				indexet. Definiáljuk az indexben szereplő mezőket, és azok típusát. A második szekcióban megadjuk az index
+				nevét és karakterkódolását. A karekterkódolás mellett a karaktertáblát is felül kell definiálnunk, ha magyar
+				ékezetes szövegben is szeretnénk keresni. Ezt követően beállítjuk az indexelő alkalmazás maximális
+				memóriafoglalását. A nagyobb érték gyorsabb indexeléssel járhat nagyobb adatmennyiség esetén. Itt meg kell
+				jegyeznem, hogy néhány tízezer rekord indexelésekor nem láttam különbséget az indexelés sebességében, ha
+				jóval több memóriát adtam, mint az alapértelmezett 32 MB, tehát csak valóban sok rekord esetén érdemes ezen
+				változtatni.</p>
+				<p><em>Nagyon fontos, hogy a lekérdezésben szereplő első érték (példánkban a <code>pr.id</code>) egyedi azonosító
+				legyen, ugyanis ez lesz a Sphinx által visszadott document ID! Ez az azonosító kizárólag pozitív egész
+				szám lehet.</em></p>
+				<p>A config fájl utolsó részében tudjuk beállítani a portot, amin a démon fut, és a napló fájlok helyét.
+				Üresen hagytam az SQL felhasználót és jelszót, azokat természetesen meg kell adni.</p>
+				<p>Nagyobb rekordszám esetén érdemes elkerülni a <code class="language-sql">GROUP BY</code>-t az SQL lekérdezésben.
+				Erre két megoldás is van: az <var>sql_attr_multi</var> és az <var>sql_joined_field</var>. Az előbbi a tag
+				azonosítók tárolására hasznos, amik a <var>SetFilter()</var> használatával szűrhetőek, míg az utóbbi megoldás
+				jóval rugalmasabb, gyakorlatilag ugyanazt az indexet tudjuk előállítani. Ezt választva, azonban szükségünk van
+				egy view-ra, ami tárolja dokumentum ID-kat és a címkéket:</p>
+				<div class="dp-highlighter">
+					<div class="bar"></div>
+					<ol start="1" class="dp-sql">
+						<li class="alt"><span><span class="keyword">CREATE</span><span>&nbsp;</span><span class="keyword">VIEW</span><span>&nbsp;tags_view&nbsp;</span><span class="keyword">AS</span><span>&nbsp;&nbsp;</span></span></li>
+						<li class=""><span><span class="keyword">SELECT</span><span>&nbsp;pr.id,&nbsp;tag.</span><span class="keyword">name</span><span>&nbsp;&nbsp;</span></span></li>
+						<li class="alt"><span><span class="keyword">FROM</span><span>&nbsp;product&nbsp;</span><span class="keyword">AS</span><span>&nbsp;pr&nbsp;&nbsp;</span></span></li>
+						<li class=""><span><span class="func">LEFT</span><span>&nbsp;</span><span class="op">JOIN</span><span>&nbsp;_product_tag&nbsp;</span><span class="keyword">AS</span><span>&nbsp;pt&nbsp;</span><span class="keyword">ON</span><span>&nbsp;pr.id&nbsp;=&nbsp;pt.product_id&nbsp;&nbsp;</span></span></li>
+						<li class="alt"><span><span class="func">LEFT</span><span>&nbsp;</span><span class="op">JOIN</span><span>&nbsp;tag&nbsp;</span><span class="keyword">ON</span><span>&nbsp;pt.tag_id&nbsp;=&nbsp;tag.id&nbsp;&nbsp;</span></span></li>
+						<li class=""><span><span class="keyword">ORDER</span><span>&nbsp;</span><span class="keyword">BY</span><span>&nbsp;id&nbsp;&nbsp;</span></span></li>
+					</ol>
+				</div>
+				<pre class="sql:code" style="display: none; "><code class="language-sql">
+CREATE VIEW tags_view AS
+SELECT pr.id, tag.name
+FROM product AS pr
+LEFT JOIN _product_tag AS pt ON pr.id = pt.product_id
+LEFT JOIN tag ON pt.tag_id = tag.id
+ORDER BY id
+				</code></pre>
+				<p>Ezután eképpen tudjuk módosítani a konfigurációs állományt:</p>
+				<div class="dp-highlighter">
+					<div class="bar"></div>
+					<ol start="1" class="dp-sql">
+						<li class="alt"><span><span>sql_query&nbsp;&nbsp;&nbsp;=&nbsp;\&nbsp;&nbsp;</span></span></li>
+						<li class=""><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">SELECT</span><span>&nbsp;pr.id,&nbsp;pr.</span><span class="keyword">name</span><span>,&nbsp;pr.</span><span class="keyword">name</span><span>&nbsp;</span><span class="keyword">AS</span><span>&nbsp;name_f,&nbsp;pr.category_id,&nbsp;pr.score,&nbsp;&nbsp;&nbsp;</span></span></li>
+						<li class="alt"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;UNIX_TIMESTAMP(pr.created_at)&nbsp;<span class="keyword">AS</span><span>&nbsp;created_at&nbsp;\&nbsp;&nbsp;</span></span></li>
+						<li class=""><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">FROM</span><span>&nbsp;product&nbsp;</span><span class="keyword">AS</span><span>&nbsp;pr&nbsp;\&nbsp;&nbsp;</span></span></li>
+						<li class="alt"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">ORDER</span><span>&nbsp;</span><span class="keyword">BY</span><span>&nbsp;id&nbsp;&nbsp;</span></span></li><li class=""><span>&nbsp;&nbsp;&nbsp;</span></li>
+						<li class="alt"><span>sql_joined_field&nbsp;=&nbsp;tags&nbsp;<span class="keyword">from</span><span>&nbsp;query;&nbsp;\&nbsp;&nbsp;</span></span></li>
+						<li class=""><span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">SELECT</span><span>&nbsp;id,&nbsp;</span><span class="keyword">name</span><span>&nbsp;</span><span class="keyword">FROM</span><span>&nbsp;tags_view&nbsp;</span><span class="keyword">ORDER</span><span>&nbsp;</span><span class="keyword">BY</span><span>&nbsp;id&nbsp;&nbsp;</span></span></li>
+					</ol>
+				</div>
+				<pre class="sql:code" style="display: none; "><code class="language-sql">
+sql_query	= \
+SELECT pr.id, pr.name, pr.name AS name_f, pr.category_id, pr.score, 
+UNIX_TIMESTAMP(pr.created_at) AS created_at \
+FROM product AS pr \
+ORDER BY id
+
+sql_joined_field = tags from query; \
+SELECT id, name FROM tags_view ORDER BY id
+				</code></pre>
+
+				<h3>Az indexelés</h3>
+				<p>Ha eddig megvagyunk, jöhet az index létrehozása:</p>
+				<div class="sourcecode sourcecode-cmd"><pre class="cmd:code">
+					<samp>C:\Sphinx\bin&gt;</samp><kbd>indexer --config C:\Sphinx\conf\sphinx_test.conf –all</kbd>
+				</pre></div>
+				<p>A példa magáért beszél: a <var>config</var> kapcsolóval megadhatjuk a konfigurációs állomány elérési útját, az
+				<var>all</var> kapcsolóval pedig megadhatjuk, hogy config fájlban szereplő indexek közül melyik legyen újra létrehozva.
+				Az <var>all</var> opcióval mindegyik index újra lesz építve.</p>
+				<h3>A kereső démon futtatása</h3>
+				<div class="sourcecode sourcecode-cmd"><pre class="cmd:code">
+					<samp>C:\Sphinx\bin&gt;</samp><kbd>searchd --config C:\Sphinx\conf\sphinx_test.conf</kbd>
+				</pre></div>
+				<p>Most már fut a kereső démon, jöhetnek a keresések! Több programnyelvhez is rendelkezésre áll Sphinx API; PHP, Ruby,
+				Python és Java nyelvekhez egyaránt vannak példák. A Sphinx használatához PHP-n keresztül mindössze include-olni kell
+				a <i>sphinxapi.php</i>-t, majd példányosítani kell a Sphinx klienst, és már jöhetnek is a keresések.</p>
+				<p>A konfigurációban definiált mezők közül mindegyikre full-text index kerül, kivéve azokat, amiket egyedileg integerként,
+				stringként, floatként stb. definiáltunk az <var>sql_attr</var> segítségével. Jól látszik, hogy a termék nevét stringként
+				is használjuk, és name_f-ként full-text indexszel is bekerül az indexbe. A string változatot rendezéskor tudjuk
+				használni, míg a full-text változatot kereséskor, a kettő együtt nem megy, ezért kell ez a kis trükközés.</p>
+				<p>A keresések előtt még nézzük tovább, mit is jelentenek az egyes mezők a konfigurációs állományban. A <var>name</var> a
+				termék neve, a <var>category_id</var> a termék kategória, a <var>score</var> a termék értékelése, a <var>tags</var> a
+				címkéket jelöli, a „created_at” a rekord létrehozási dátuma.</p>
+				<p>A Sphinx keresések némileg eltérnek a MySQL keresésekről, főként az alábbiakban.</p>
+				<ul>
+					<li>A Sphinx csak a dokumentum azonosítókat adja vissza a teljes sorok helyett, így a keresések megjelenítéshez még
+					külön lekérdezést kell futtatni.</li>
+					<li>Nem kell külön <code class="language-sql">COUNT</code> lekérdezést futtatni, mert a lekérdezés eredményében
+					szerepel az összes talált elem száma is.</li>
+					<li>A Sphinx saját lekérdező nyelvvel rendelkezik (SphinxQL), ami némileg hasonlít az SQL-hez.</li>
+					<li>Alap esetben a Sphinx csak az első 1000 találatot adja vissza (a jobb teljesítmény érdekében), ami a
+					<var>max_matches</var> megadásával felüldefiniálható a konfigurációban.</li>
+				</ul>
+				<h3>Jöjjenek végre a keresések!</h3>
+				<div class="dp-highlighter">
+					<div class="bar"></div>
+					<ol start="1" class="dp-c">
+						<li class="alt"><span><span>&lt;?php&nbsp;&nbsp;</span></span></li>
+						<li class=""><span>header(<span class="string">'Content-Type:&nbsp;text/html;&nbsp;charset=utf-8'</span><span>);&nbsp;&nbsp;</span></span></li>
+						<li class="alt"><span><span class="keyword">include</span><span>(</span><span class="string">'sphinxapi.php'</span><span>);&nbsp;&nbsp;</span></span></li>
+						<li class=""><span>&nbsp;&nbsp;&nbsp;</span></li>
+						<li class="alt"><span><span class="keyword">function</span><span>&nbsp;display(</span><span class="vars">$result</span><span>,&nbsp;</span><span class="vars">$query</span><span>)&nbsp;{&nbsp;&nbsp;</span></span></li>
+						<li class=""><span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="func">echo</span><span>&nbsp;</span><span class="string">'&lt;h2&gt;'</span><span>.</span><span class="vars">$query</span><span>.</span><span class="string">'&lt;/h2&gt;'</span><span>;&nbsp;&nbsp;</span></span></li>
+						<li class="alt"><span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="func">echo</span><span>&nbsp;</span><span class="string">'&lt;h3&gt;Találatok:&nbsp;'</span><span>.</span><span class="vars">$result</span><span>[</span><span class="string">'total_found'</span><span>].</span><span class="string">'&lt;/h3&gt;'</span><span>;&nbsp;&nbsp;</span></span></li>
+						<li class=""><span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="func">echo</span><span>&nbsp;</span><span class="string">'&lt;h3&gt;&nbsp;Összes:&nbsp;'</span><span>.</span><span class="vars">$result</span><span>[</span><span class="string">'total'</span><span>].</span><span class="string">'&lt;/h3&gt;'</span><span>;&nbsp;&nbsp;</span></span></li>
+						<li class="alt"><span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="func">echo</span><span>&nbsp;</span><span class="string">'&lt;h3&gt;Lekérdezés&nbsp;ideje:&nbsp;'</span><span>.</span><span class="vars">$result</span><span>[</span><span class="string">'time'</span><span>].</span><span class="string">'s&lt;/h3&gt;'</span><span>;&nbsp;&nbsp;</span></span></li>
+						<li class=""><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></li>
+						<li class="alt"><span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="func">echo</span><span>&nbsp;</span><span class="string">'&lt;p&gt;DOC&nbsp;id-k:&nbsp;'</span><span>;&nbsp;&nbsp;</span></span></li>
+						<li class=""><span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">foreach</span><span>&nbsp;(</span><span class="vars">$result</span><span>[</span><span class="string">'matches'</span><span>]&nbsp;</span><span class="keyword">as</span><span>&nbsp;</span><span class="vars">$item</span><span>)&nbsp;{&nbsp;&nbsp;</span></span></li>
+						<li class="alt"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="func">echo</span><span>&nbsp;</span><span class="vars">$item</span><span>[</span><span class="string">'id'</span><span>].</span><span class="string">'&nbsp;'</span><span>;&nbsp;&nbsp;</span></span></li>
+						<li class=""><span>&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;&nbsp;</span></li>
+						<li class="alt"><span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="func">echo</span><span>&nbsp;</span><span class="string">'&lt;/p&gt;&lt;hr&nbsp;/&gt;'</span><span>;&nbsp;&nbsp;</span></span></li>
+						<li class=""><span>}&nbsp;&nbsp;</span></li>
+						<li class="alt"><span>&nbsp;&nbsp;&nbsp;</span></li>
+						<li class=""><span><span class="vars">$client</span><span>&nbsp;=&nbsp;</span><span class="keyword">new</span><span>&nbsp;SphinxClient();&nbsp;&nbsp;</span></span></li>
+						<li class="alt"><span>&nbsp;&nbsp;&nbsp;</span></li>
+						<li class=""><span><span class="comment">//&nbsp;kapcsolodas</span><span>&nbsp;&nbsp;</span></span></li>
+						<li class="alt"><span><span class="vars">$client</span><span>-&gt;SetServer(</span><span class="string">'127.0.0.1'</span><span>,&nbsp;9310);&nbsp;&nbsp;</span></span></li>
+						<li class=""><span><span class="vars">$client</span><span>-&gt;SetConnectTimeout(1);&nbsp;&nbsp;</span></span></li>
+						<li class="alt"><span><span class="vars">$client</span><span>-&gt;SetArrayResult(true);&nbsp;&nbsp;</span></span></li>
+						<li class=""><span>&nbsp;&nbsp;&nbsp;</span></li>
+						<li class="alt"><span><span class="comment">//&nbsp;eles&nbsp;kereseskor&nbsp;tobbnyire&nbsp;beallitjuk&nbsp;a&nbsp;limitet</span><span>&nbsp;&nbsp;</span></span></li>
+						<li class=""><span><span class="vars">$client</span><span>-&gt;SetLimits(0,&nbsp;10);&nbsp;&nbsp;</span></span></li>
+						<li class="alt"><span>&nbsp;&nbsp;&nbsp;</span></li><li class=""><span><span class="comment">//&nbsp;a&nbsp;leheto&nbsp;legegyszerubb&nbsp;kereses</span><span>&nbsp;&nbsp;</span></span></li>
+						<li class="alt"><span><span class="vars">$result</span><span>&nbsp;=&nbsp;</span><span class="vars">$client</span><span>-&gt;Query(</span><span class="string">''</span><span>);&nbsp;&nbsp;</span></span></li>
+						<li class=""><span>display(<span class="vars">$result</span><span>,&nbsp;</span><span class="string">"''"</span><span>);&nbsp;&nbsp;</span></span></li>
+						<li class="alt"><span>&nbsp;&nbsp;&nbsp;</span></li><li class=""><span><span class="comment">//&nbsp;nev&nbsp;szerinti&nbsp;rendezes</span><span>&nbsp;&nbsp;</span></span></li>
+						<li class="alt"><span><span class="vars">$client</span><span>-&gt;SetSortMode(SPH_SORT_ATTR_ASC,&nbsp;</span><span class="string">'name'</span><span>);&nbsp;&nbsp;</span></span></li>
+						<li class=""><span><span class="vars">$result</span><span>&nbsp;=&nbsp;</span><span class="vars">$client</span><span>-&gt;Query(</span><span class="string">''</span><span>);&nbsp;&nbsp;</span></span></li>
+						<li class="alt"><span>display(<span class="vars">$result</span><span>,&nbsp;</span><span class="string">"''"</span><span>);&nbsp;&nbsp;</span></span></li>
+						<li class=""><span>&nbsp;&nbsp;&nbsp;&nbsp;</span></li><li class="alt"><span><span class="comment">//&nbsp;a&nbsp;default&nbsp;match&nbsp;mode:&nbsp;SPH_MATCH_ALL</span><span>&nbsp;&nbsp;</span></span></li>
+						<li class=""><span><span class="comment">//&nbsp;hasznalataval&nbsp;az&nbsp;osszes&nbsp;full-text&nbsp;indexelt&nbsp;mezon&nbsp;lefut&nbsp;a&nbsp;kereses</span><span>&nbsp;&nbsp;</span></span></li>
+						<li class="alt"><span><span class="vars">$client</span><span>-&gt;SetMatchMode(SPH_MATCH_ALL);&nbsp;&nbsp;</span></span></li>
+						<li class=""><span><span class="vars">$result</span><span>&nbsp;=&nbsp;</span><span class="vars">$client</span><span>-&gt;Query(</span><span class="string">'macska'</span><span>);&nbsp;&nbsp;</span></span></li>
+						<li class="alt"><span>display(<span class="vars">$result</span><span>,&nbsp;</span><span class="string">'macska'</span><span>);&nbsp;&nbsp;</span></span></li>
+						<li class=""><span>&nbsp;&nbsp;&nbsp;</span></li><li class="alt"><span><span class="comment">//&nbsp;ha&nbsp;csak&nbsp;a&nbsp;cimkek&nbsp;kozott&nbsp;szeretnenk&nbsp;keresni,&nbsp;akkor&nbsp;mar&nbsp;a&nbsp;SPH_MATCH_EXTENDED&nbsp;egyezesi&nbsp;modra&nbsp;van&nbsp;szuksegunk</span><span>&nbsp;&nbsp;</span></span></li>
+						<li class=""><span><span class="vars">$client</span><span>-&gt;SetMatchMode(SPH_MATCH_EXTENDED);&nbsp;&nbsp;</span></span></li>
+						<li class="alt"><span>&nbsp;&nbsp;</span></li>
+						<li class=""><span><span class="comment">//&nbsp;a&nbsp;keresesi&nbsp;eredemenyeket&nbsp;a&nbsp;pontszam&nbsp;szerint&nbsp;rendezzuk&nbsp;(a&nbsp;nagyobb&nbsp;van&nbsp;elol)</span><span>&nbsp;&nbsp;</span></span></li>
+						<li class="alt"><span><span class="vars">$client</span><span>-&gt;SetSortMode(SPH_SORT_ATTR_DESC,&nbsp;</span><span class="string">'score'</span><span>);&nbsp;&nbsp;</span></span></li>
+						<li class=""><span>&nbsp;&nbsp;&nbsp;</span></li>
+						<li class="alt"><span><span class="comment">//&nbsp;a&nbsp;cimkek&nbsp;kozott&nbsp;keresunk&nbsp;a&nbsp;macska&nbsp;szora</span><span>&nbsp;&nbsp;</span></span></li>
+						<li class=""><span><span class="vars">$result</span><span>&nbsp;=&nbsp;</span><span class="vars">$client</span><span>-&gt;Query(</span><span class="string">'@tags&nbsp;macska'</span><span>);&nbsp;&nbsp;</span></span></li>
+						<li class="alt"><span>display(<span class="vars">$result</span><span>,&nbsp;</span><span class="string">'@tags&nbsp;macska'</span><span>);&nbsp;&nbsp;</span></span></li>
+						<li class=""><span>&nbsp;&nbsp;&nbsp;</span></li>
+						<li class="alt"><span><span class="comment">//&nbsp;osszetett&nbsp;kereseseket&nbsp;is&nbsp;futtathatunk,&nbsp;hasznalhatjuk&nbsp;a&nbsp;szokasos&nbsp;AND,&nbsp;OR&nbsp;es&nbsp;egyeb&nbsp;operatorokat</span><span>&nbsp;&nbsp;</span></span></li>
+						<li class=""><span><span class="vars">$result</span><span>&nbsp;=&nbsp;</span><span class="vars">$client</span><span>-&gt;Query(</span><span class="string">'@name_f&nbsp;macskatáp&nbsp;|&nbsp;@tags&nbsp;kutya'</span><span>);&nbsp;&nbsp;</span></span></li>
+						<li class="alt"><span>display(<span class="vars">$result</span><span>,&nbsp;</span><span class="string">'@name_f&nbsp;macskatáp&nbsp;|&nbsp;@tags&nbsp;kutya'</span><span>);&nbsp;&nbsp;</span></span></li>
+						<li class=""><span>&nbsp;&nbsp;&nbsp;</span></li>
+						<li class="alt"><span><span class="comment">//&nbsp;ha&nbsp;nincs&nbsp;meghatarozva&nbsp;az&nbsp;operator&nbsp;akkor&nbsp;AND&nbsp;kapcsolat&nbsp;van&nbsp;kozottuk</span><span>&nbsp;&nbsp;</span></span></li>
+						<li class=""><span><span class="vars">$result</span><span>&nbsp;=&nbsp;</span><span class="vars">$client</span><span>-&gt;Query(</span><span class="string">'@name_f&nbsp;dog&nbsp;@tags&nbsp;kutya'</span><span>);&nbsp;&nbsp;</span></span></li>
+						<li class="alt"><span>display(<span class="vars">$result</span><span>,&nbsp;</span><span class="string">'@name_f&nbsp;dog&nbsp;@tags&nbsp;kutya'</span><span>);&nbsp;&nbsp;</span></span></li>
+						<li class=""><span>&nbsp;&nbsp;&nbsp;</span></li>
+						<li class="alt"><span><span class="vars">$result</span><span>&nbsp;=&nbsp;</span><span class="vars">$client</span><span>-&gt;Query(</span><span class="string">'@tags&nbsp;táp'</span><span>);&nbsp;&nbsp;</span></span></li>
+						<li class=""><span><span class="comment">//&nbsp;lehetoseg&nbsp;van&nbsp;egyszerre&nbsp;novekvo&nbsp;es&nbsp;csokkeno&nbsp;rendezest&nbsp;hasznalni</span><span>&nbsp;&nbsp;</span></span></li>
+						<li class="alt"><span><span class="vars">$client</span><span>-&gt;SetSortMode(SPH_SORT_EXTENDED,&nbsp;</span><span class="string">'score&nbsp;DESC,&nbsp;name&nbsp;ASC'</span><span>);&nbsp;&nbsp;</span></span></li>
+						<li class=""><span>display(<span class="vars">$result</span><span>,&nbsp;</span><span class="string">'@tags&nbsp;táp'</span><span>);&nbsp;&nbsp;</span></span></li>
+						<li class="alt"><span>&nbsp;&nbsp;&nbsp;</span></li>
+						<li class=""><span><span class="comment">//&nbsp;lehetoseg&nbsp;van&nbsp;a&nbsp;relevancia(suly)&nbsp;szerinti&nbsp;rendezesre&nbsp;is</span><span>&nbsp;&nbsp;</span></span></li>
+						<li class="alt"><span><span class="vars">$result</span><span>&nbsp;=&nbsp;</span><span class="vars">$client</span><span>-&gt;Query(</span><span class="string">'@tags&nbsp;táp'</span><span>);&nbsp;&nbsp;</span></span></li>
+						<li class=""><span><span class="comment">//&nbsp;az&nbsp;SPH_SORT_RELEVANCE&nbsp;gyakorlatilag&nbsp;egyenlo&nbsp;a&nbsp;"@weight&nbsp;DESC,&nbsp;@id&nbsp;ASC"-el</span><span>&nbsp;&nbsp;</span></span></li>
+						<li class="alt"><span><span class="comment">//&nbsp;a&nbsp;@relevance&nbsp;és&nbsp;a&nbsp;@rank&nbsp;a&nbsp;@weight&nbsp;szinonimai</span><span>&nbsp;&nbsp;</span></span></li>
+						<li class=""><span><span class="vars">$client</span><span>-&gt;SetSortMode(SPH_SORT_RELEVANCE);&nbsp;&nbsp;</span></span></li>
+						<li class="alt"><span>display(<span class="vars">$result</span><span>,&nbsp;</span><span class="string">'@tags&nbsp;táp'</span><span>);&nbsp;&nbsp;</span></span></li>
+						<li class=""><span>&nbsp;&nbsp;&nbsp;</span></li>
+						<li class="alt"><span><span class="comment">//&nbsp;lehetoseg&nbsp;van&nbsp;pontos&nbsp;idezetre&nbsp;is&nbsp;keresni,&nbsp;ehhez&nbsp;csak</span><span>&nbsp;&nbsp;</span></span></li>
+						<li class=""><span><span class="comment">//&nbsp;idezojelbe&nbsp;kell&nbsp;tenni&nbsp;a&nbsp;keresoszot</span><span>&nbsp;&nbsp;</span></span></li>
+						<li class="alt"><span><span class="vars">$result</span><span>&nbsp;=&nbsp;</span><span class="vars">$client</span><span>-&gt;Query(</span><span class="string">'@tags&nbsp;"kutya"'</span><span>);&nbsp;&nbsp;</span></span></li>
+						<li class=""><span>display(<span class="vars">$result</span><span>,&nbsp;</span><span class="string">'@tags&nbsp;"kutya"'</span><span>);&nbsp;&nbsp;</span></span></li>
+						<li class="alt"><span>&nbsp;&nbsp;&nbsp;</span></li><li class=""><span><span class="comment">//&nbsp;kereshetunk&nbsp;szovegreszletre&nbsp;is,&nbsp;ehhez&nbsp;a&nbsp;config&nbsp;fajlban</span><span>&nbsp;&nbsp;</span></span></li>
+						<li class="alt"><span><span class="comment">//&nbsp;meg&nbsp;kell&nbsp;adnunk&nbsp;az&nbsp;enable_star&nbsp;es&nbsp;a&nbsp;min_prefix_len&nbsp;parametereket</span><span>&nbsp;&nbsp;</span></span></li>
+						<li class=""><span><span class="vars">$result</span><span>&nbsp;=&nbsp;</span><span class="vars">$client</span><span>-&gt;Query(</span><span class="string">'@tags&nbsp;"ku*"'</span><span>);&nbsp;&nbsp;</span></span></li>
+						<li class="alt"><span>display(<span class="vars">$result</span><span>,&nbsp;</span><span class="string">'@tags&nbsp;"ku*"'</span><span>);&nbsp;&nbsp;</span></span></li>
+						<li class=""><span>&nbsp;&nbsp;&nbsp;</span></li>
+						<li class="alt"><span><span class="comment">//&nbsp;csak&nbsp;azokat&nbsp;listazza,&nbsp;amelyek&nbsp;az&nbsp;1-es&nbsp;kategoriaba&nbsp;tartoznak</span><span>&nbsp;&nbsp;</span></span></li>
+						<li class=""><span><span class="comment">//&nbsp;a&nbsp;filter&nbsp;mindenkeppen&nbsp;tombot&nbsp;var&nbsp;masodik&nbsp;parameterkent</span><span>&nbsp;&nbsp;</span></span></li>
+						<li class="alt"><span><span class="vars">$client</span><span>-&gt;SetFilter&nbsp;(</span><span class="string">'category_id'</span><span>,&nbsp;</span><span class="keyword">array</span><span>(1));&nbsp;&nbsp;</span></span></li>
+						<li class=""><span><span class="vars">$result</span><span>&nbsp;=&nbsp;</span><span class="vars">$client</span><span>-&gt;Query(</span><span class="string">''</span><span>);&nbsp;&nbsp;</span></span></li>
+						<li class="alt"><span><span class="vars">$client</span><span>-&gt;SetSortMode(SPH_SORT_EXTENDED,&nbsp;</span><span class="string">'score&nbsp;DESC,&nbsp;name&nbsp;ASC'</span><span>);&nbsp;&nbsp;</span></span></li>
+						<li class=""><span>display(<span class="vars">$result</span><span>,&nbsp;</span><span class="string">"''"</span><span>);&nbsp;&nbsp;</span></span></li>
+					</ol>
+				</div>
+				<pre class="php:code" style="display: none; "><code class="language-php">
+&lt;?php
+header('Content-Type: text/html; charset=utf-8');
+include('sphinxapi.php');
+
+function display($result, $query) {
+echo '&lt;h2&gt;'.$query.'&lt;/h2&gt;';
+echo '&lt;h3&gt;Találatok: '.$result['total_found'].'&lt;/h3&gt;';
+echo '&lt;h3&gt; Összes: '.$result['total'].'&lt;/h3&gt;';
+echo '&lt;h3&gt;Lekérdezés ideje: '.$result['time'].'s&lt;/h3&gt;';
+
+echo '&lt;p&gt;DOC id-k: ';
+foreach ($result['matches'] as $item) {
+echo $item['id'].' ';
+}
+echo '&lt;/p&gt;&lt;hr /&gt;';
+}
+
+$client = new SphinxClient();
+
+// kapcsolodas
+$client-&gt;SetServer('127.0.0.1', 9310);
+$client-&gt;SetConnectTimeout(1);
+$client-&gt;SetArrayResult(true);
+
+// eles kereseskor tobbnyire beallitjuk a limitet
+$client-&gt;SetLimits(0, 10);
+
+// a leheto legegyszerubb kereses
+$result = $client-&gt;Query('');
+display($result, "''");
+
+// nev szerinti rendezes
+$client-&gt;SetSortMode(SPH_SORT_ATTR_ASC, 'name');
+$result = $client-&gt;Query('');
+display($result, "''");
+
+// a default match mode: SPH_MATCH_ALL
+// hasznalataval az osszes full-text indexelt mezon lefut a kereses
+$client-&gt;SetMatchMode(SPH_MATCH_ALL);
+$result = $client-&gt;Query('macska');
+display($result, 'macska');
+
+// ha csak a cimkek kozott szeretnenk keresni, akkor mar a SPH_MATCH_EXTENDED egyezesi modra van szuksegunk
+$client-&gt;SetMatchMode(SPH_MATCH_EXTENDED);
+
+// a keresesi eredemenyeket a pontszam szerint rendezzuk (a nagyobb van elol)
+$client-&gt;SetSortMode(SPH_SORT_ATTR_DESC, 'score');
+
+// a cimkek kozott keresunk a macska szora
+$result = $client-&gt;Query('@tags macska');
+display($result, '@tags macska');
+
+// osszetett kereseseket is futtathatunk, hasznalhatjuk a szokasos AND, OR es egyeb operatorokat
+$result = $client-&gt;Query('@name_f macskatáp | @tags kutya');
+display($result, '@name_f macskatáp | @tags kutya');
+
+// ha nincs meghatarozva az operator akkor AND kapcsolat van kozottuk
+$result = $client-&gt;Query('@name_f dog @tags kutya');
+display($result, '@name_f dog @tags kutya');
+
+$result = $client-&gt;Query('@tags táp');
+// lehetoseg van egyszerre novekvo es csokkeno rendezest hasznalni
+$client-&gt;SetSortMode(SPH_SORT_EXTENDED, 'score DESC, name ASC');
+display($result, '@tags táp');
+
+// lehetoseg van a relevancia(suly) szerinti rendezesre is
+$result = $client-&gt;Query('@tags táp');
+// az SPH_SORT_RELEVANCE gyakorlatilag egyenlo a "@weight DESC, @id ASC"-el
+// a @relevance és a @rank a @weight szinonimai
+$client-&gt;SetSortMode(SPH_SORT_RELEVANCE);
+display($result, '@tags táp');
+
+// lehetoseg van pontos idezetre is keresni, ehhez csak
+// idezojelbe kell tenni a keresoszot
+$result = $client-&gt;Query('@tags "kutya"');
+display($result, '@tags "kutya"');
+
+// kereshetunk szovegreszletre is, ehhez a config fajlban
+// meg kell adnunk az enable_star es a min_prefix_len parametereket
+$result = $client-&gt;Query('@tags "ku*"');
+display($result, '@tags "ku*"');
+
+// csak azokat listazza, amelyek az 1-es kategoriaba tartoznak
+// a filter mindenkeppen tombot var masodik parameterkent
+$client-&gt;SetFilter ('category_id', array(1));
+$result = $client-&gt;Query('');
+$client-&gt;SetSortMode(SPH_SORT_EXTENDED, 'score DESC, name ASC');
+display($result, "''");
+				</code></pre>
+
+				<p>Remélem, sikerült megadnom a kezdőimpulzust a Sphinx használatához azok számára is, akik túl bonyolultnak gondolták az
+				első lépéseket. Innentől már nincs más, mint használni a Sphinxet, és próbálgatni a lehetőségeit.</p>
+				<p>Ezúton köszönöm CoL-nak, hogy átnézte és lektorálta a cikket.</p>
+			</div>
+			<div class="tags"><ul class="links inline">
+				<li class="taxonomy_term_289 first"><a href="<?php echo $base; ?>/cimkek/289" rel="tag" title="">adatbázis</a></li>
+				<li class="taxonomy_term_1291"><a href="<?php echo $base; ?>/cimkek/1291" rel="tag" title="">keresés</a></li>
+				<li class="taxonomy_term_246"><a href="<?php echo $base; ?>/cimkek/246" rel="tag" title="">PHP</a></li>
+				<li class="taxonomy_term_1709 last"><a href="<?php echo $base; ?>/cimkek/1709" rel="tag" title="">Sphinx</a></li>
+			</ul></div>
+		</div>
+
+		<div id="comments">
+			<a id="comment-77064"></a>
+			<div class="comment clear-block odd">
+				<div class="commentnum">1</div>
+				<h3 class="subject"><a href="<?php echo $base; ?>/cikkek/sphinx-keresomotor-bevezetes#comment-77064" class="active">két kérdés</a> </h3>
+				<div class="meta">
+					<a href="<?php echo $base; ?>/tagok/7503" title="Felhasználói profil megtekintése." class="wlavatar" style="background-image: url(http://weblabor.hu/misc/avatar/18.gif)">solkprog</a>
+					· <span title="A megjelenés ideje: 2011. Jún. 6. (H), 20.50">Jún. 6. (H), 20.50</span>
+				</div>
+				<div class="content"><div class="whateffect">
+					Először is köszönöm(jük) a cikket!<br>
+					De két röpke kérdésem felmerült bennem:<br>
+					-ez a 4-10-50-100-500x gyorsulás tapasztalható really? saját mérés vagy holnapon szereplő PR fogás? <br>
+					-a keresődémon mennyire eszi a gépet?
+				</div></div>
+				<div class="links"><ul class="links inline">
+					<li class="retweet first"></li>
+					<li class="comment_delete"><a href="<?php echo $base; ?>/comment/delete/77064">törlés</a></li>
+					<li class="comment_edit"><a href="<?php echo $base; ?>/comment/edit/77064">szerkesztés</a></li>
+					<li class="comment_reply"><a href="<?php echo $base; ?>/cikkek/sphinx-keresomotor-bevezetes/hozzaszolas/77064">válasz</a></li>
+					<li class="forum_topic last"><a href="<?php echo $base; ?>/forumok/bekuldes">új téma</a></li>
+				</ul></div>
+			</div>
+			
+			<div class="indented">
+				<a id="comment-77066"></a>
+				<div class="comment clear-block even">
+					<div class="commentnum">2</div>
+					<h3 class="subject"><a href="<?php echo $base; ?>/cikkek/sphinx-keresomotor-bevezetes#comment-77066" class="active">A következőek tapasztalataim:</a> </h3>
+					<div class="meta">
+						<a href="<?php echo $base; ?>/tagok/25076" title="Felhasználói profil megtekintése." class="wlavatar" style="background-image: url(http://weblabor.hu/misc/avatar/14.gif)">_subi_</a>
+						· <span title="A megjelenés ideje: 2011. Jún. 6. (H), 22.27">Jún. 6. (H), 22.27</span>
+					</div>
+					<div class="content"><div class="whateffect">
+						Vannak olyan lekérdezéseim, ahol 20x gyorsabb a Sphinx, máshol "csak" 5x, bár hozzá kell tennem, hogy a MyISAM
+						full-text lekérdezéseim elég alaposan optimalizálva voltak, ha nem lett volna cache táblám, hanem közvetlenül
+						az InnoDB táblákban kerestem volna join-okkal és egyebekkel, akkor sokkal durvább lehetne a különbség.<br><br>
+						A terhelés terén igen pozitívak a tapasztalataim, látványosan visszaesett a load, mióta Sphinx-et használunk.
+						A MySQL még úgy is több erőforrást használ (mind memóriában, mind CPU-ban), hogy a lekérdezések kb. 90%-át a
+						Sphinx viszi (az oldalam a keresésekre van kihegyezve).
+					</div></div>
+					<div class="links"><ul class="links inline">
+						<li class="retweet first"></li>
+						<li class="comment_delete"><a href="<?php echo $base; ?>/comment/delete/77066">törlés</a></li>
+						<li class="comment_edit"><a href="<?php echo $base; ?>/comment/edit/77066">szerkesztés</a></li>
+						<li class="comment_reply"><a href="<?php echo $base; ?>/cikkek/sphinx-keresomotor-bevezetes/hozzaszolas/77066">válasz</a></li>
+						<li class="forum_topic last"><a href="<?php echo $base; ?>/forumok/bekuldes">új téma</a></li>
+					</ul></div>
+				</div>
+				
+				<a id="comment-77069"></a>
+				<div class="comment clear-block odd">
+					<div class="commentnum">3</div>
+					<h3 class="subject"><a href="<?php echo $base; ?>/cikkek/sphinx-keresomotor-bevezetes#comment-77069" class="active">500x biztos nem, de 5-10x</a> </h3>
+					<div class="meta">
+						<a href="<?php echo $base; ?>/tagok/7878" title="Felhasználói profil megtekintése." class="wlavatar" style="background-image: url(http://weblabor.hu/misc/avatar/14.gif)">gphilip</a>
+						· <span title="A megjelenés ideje: 2011. Jún. 7. (K), 01.53">Jún. 7. (K), 01.53</span>
+					</div>
+					<div class="content"><div class="whateffect">
+						500x biztos nem, de 5-10x reálisan tapasztalható, persze sokmindentől függ :) Az biztos, hogy rengeteg terhet levesz az
+						RDBMS-ed válláról.
+					</div></div>
+					<div class="links"><ul class="links inline">
+						<li class="retweet first"></li>
+						<li class="comment_delete"><a href="<?php echo $base; ?>/comment/delete/77069">törlés</a></li>
+						<li class="comment_edit"><a href="<?php echo $base; ?>/comment/edit/77069">szerkesztés</a></li>
+						<li class="comment_reply"><a href="<?php echo $base; ?>/cikkek/sphinx-keresomotor-bevezetes/hozzaszolas/77069">válasz</a></li>
+						<li class="forum_topic last"><a href="<?php echo $base; ?>/forumok/bekuldes">új téma</a></li>
+					</ul></div>
+				</div>
+			</div>
+			
+			<a id="comment-77165"></a>
+			<div class="comment clear-block even">
+				<div class="commentnum">4</div>
+				<h3 class="subject"><a href="<?php echo $base; ?>/cikkek/sphinx-keresomotor-bevezetes#comment-77165" class="active">indexer és searchd</a> </h3>
+				<div class="meta">
+					<a href="<?php echo $base; ?>/tagok/23615" title="Felhasználói profil megtekintése." class="wlavatar" style="background-image: url(http://weblabor.hu/misc/avatar/07.gif)">Ifju</a>
+					· <span title="A megjelenés ideje: 2011. Jún. 10. (P), 11.37">Jún. 10. (P), 11.37</span>
+				</div>
+				<div class="content"><div class="whateffect">
+					Mi történik akkor, amikor futó searchd mellett újra elindítod az indexelést, hogy az adatbázisban történt változásokról
+					a Sphinx is tudjon? Az érdekelne, hogy az újraindexelés közben a keresés mennyire marad használható?
+				</div></div>
+				<div class="links"><ul class="links inline">
+					<li class="retweet first"></li>
+					<li class="comment_delete"><a href="<?php echo $base; ?>/comment/delete/77165">törlés</a></li>
+					<li class="comment_edit"><a href="<?php echo $base; ?>/comment/edit/77165">szerkesztés</a></li>
+					<li class="comment_reply"><a href="<?php echo $base; ?>/cikkek/sphinx-keresomotor-bevezetes/hozzaszolas/77165">válasz</a></li>
+					<li class="forum_topic last"><a href="<?php echo $base; ?>/forumok/bekuldes">új téma</a></li>
+				</ul></div>
+			</div>
+
+			<div class="indented">
+				<a id="comment-77180"></a>
+				<div class="comment clear-block odd">
+					<div class="commentnum">5</div>
+					<h3 class="subject"><a href="<?php echo $base; ?>/cikkek/sphinx-keresomotor-bevezetes#comment-77180" class="active">rotate</a> </h3>
+					<div class="meta">
+						<a href="<?php echo $base; ?>/tagok/25076" title="Felhasználói profil megtekintése." class="wlavatar" style="background-image: url(http://weblabor.hu/misc/avatar/14.gif)">_subi_</a>
+						· <span title="A megjelenés ideje: 2011. Jún. 10. (P), 17.14">Jún. 10. (P), 17.14</span>
+					</div>
+					<div class="content"><div class="whateffect">
+						Ha használod a rotate kapcsolót indexelésnél, akkor a searchd futását nem kell megszakítani, igaz így nagyobb
+						lesz az indexelés memóriafoglalása. Bár ennek csak tényleg nagy adatmennyiség esetén van jelentősége.
+					</div></div>
+					<div class="links"><ul class="links inline">
+						<li class="retweet first"></li>
+						<li class="comment_delete"><a href="<?php echo $base; ?>/comment/delete/77180">törlés</a></li>
+						<li class="comment_edit"><a href="<?php echo $base; ?>/comment/edit/77180">szerkesztés</a></li>
+						<li class="comment_reply"><a href="<?php echo $base; ?>/cikkek/sphinx-keresomotor-bevezetes/hozzaszolas/77180">válasz</a></li>
+						<li class="forum_topic last"><a href="<?php echo $base; ?>/forumok/bekuldes">új téma</a></li>
+					</ul></div>
+				</div>
+			</div>
+		</div>
+	</div> <!-- /content-content -->
+</div>

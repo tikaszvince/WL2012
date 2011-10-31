@@ -1,0 +1,80 @@
+<!doctype html>
+<!--[if lt IE 7]> <html class="no-js ie6 oldie" lang="en"> <![endif]-->
+<!--[if IE 7]>    <html class="no-js ie7 oldie" lang="en"> <![endif]-->
+<!--[if IE 8]>    <html class="no-js ie8 oldie" lang="en"> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en"> <!--<![endif]-->
+<head>
+	<meta charset="utf-8" />
+	<!--
+	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+	-->
+
+	<title><?php echo isset( $title ) ? $title.' &middot; Weblabor' : 'Weblabor &middot; A fejlesztői forrás' ?></title>
+	<meta name="description" content="" />
+	<meta name="author" content="" />
+
+	<meta name="viewport" content="width=device-width,initial-scale=1" />
+
+	<link rel="stylesheet" href="<?php echo $base ?>/css/style.css" />
+	<link rel="stylesheet" href="<?php echo $base ?>/css/fluid_grid.css" />
+	<link rel="stylesheet" href="<?php echo $base ?>/css/layout.css" />
+
+	<script src="<?php echo $base ?>/js/libs/modernizr-2.0.6.min.js"></script>
+	<script>
+	var baseUrl = '<?php echo $base ?>';
+	</script>
+</head>
+<body>
+<header class="container_12 pagehead">
+	<h1><a href="<?php echo $base ?>/">weblabor</a></h1>
+	<nav id="usernav" class="grid_4">
+		<menu>
+			<li class="">
+				<a id="loginlink" href="<?php echo $base ?>/tagok/belepes">Bejelentkezés</a>
+				<form class="hidden" action="<?php echo $base ?>/tagok/belepes" accept-charset="UTF-8" method="post" id="user-login">
+					<div>
+						<div class="form-item" id="edit-name-wrapper">
+							<label for="edit-name">Felhasználói név: <span class="form-required" title="Szükséges mező.">*</span></label>
+							<input type="text" maxlength="60" name="name" id="edit-name" size="50" value="" class="form-text required">
+							<div class="description">A webhelyen regisztrált felhasználói név.</div>
+						</div>
+						<div class="form-item" id="edit-pass-wrapper">
+							<label for="edit-pass">Jelszó: <span class="form-required" title="Szükséges mező.">*</span></label>
+							<input type="password" name="pass" id="edit-pass" maxlength="128" size="50" class="form-text required">
+							<div class="description">A felhasználói névhez tartozó jelszó.</div>
+						</div>
+						<input type="hidden" name="form_build_id" id="form-2ed457eaf172ce4e46fb3c67b25ea741" value="form-2ed457eaf172ce4e46fb3c67b25ea741">
+						<input type="hidden" name="form_id" id="edit-user-login" value="user_login">
+						<input type="submit" name="op" id="edit-submit" value="Belépés" class="form-submit">
+					</div>
+					<div>
+						<a href="<?php echo $base; ?>/tagok/jelszo">Elfelejtett jelszó</a>
+					</div>
+				</form>
+			</li>
+
+			<li class=""><a id="reglink" href="<?php echo $base ?>/tagok/regisztracio">Regisztráció</a></li>
+			<li class="">
+				<form id="searchform" action="<?php echo $base ?>/kereses" method="get">
+					<label for="s">Keresés</label>
+					<input id="s" name="s" type="search" placeholder="Keresés…" value="<?php echo $s ?>" />
+					<button type="submit"><span>Keresés</span></button>
+				</form>
+			</li>
+		</menu>
+	</nav>
+
+	<nav id="pagenav">
+		<menu class="links inline">
+			<li><a href="<?php echo $base ?>/blog" title="Rövidebb írásaink">Blog</a></li>
+			<li><a href="<?php echo $base ?>/blogmarkok" title="Más weboldalakat ajánlunk">Blogmarkok</a></li>
+			<li><a href="<?php echo $base ?>/cikkek" title="Hosszabb lélegzetvételű írásaink">Cikkek</a></li>
+			<li><a href="<?php echo $base ?>/forumok" title="A közösség kibontakozása">Fórumok</a></li>
+			<li><a href="<?php echo $base ?>/levlistak" title="Levezőlista archívumok, feliratkozás">Levlisták</a></li>
+			<li><a href="<?php echo $base ?>/munka" title="Webes állás és munkahirdetések" class="active active">Munka és állás</a></li>
+			<li><a href="<?php echo $base ?>/konyvek" title="Általunk olvasott könyvek">Könyvek</a></li>
+			<li><a href="<?php echo $base ?>/koveto" title="Minden friss tartalom">Friss</a></li>
+		</menu>
+	</nav>
+</header>
+<div class="container_12">

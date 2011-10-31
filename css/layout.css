@@ -1,0 +1,158 @@
+
+.pagehead,
+.pagefoot {
+	position:relative;
+}
+
+.pagehead {
+	padding: 5.5em 0 0;
+}
+.pagehead h1 {
+	font-size: 4em;
+	background: #000;
+	position: absolute;
+	top: 0;
+	z-index: 12;
+	margin: 0;
+	padding: .3em .6em;
+}
+.pagehead h1,
+.pagehead h1 a {
+	color:#fff;
+	text-decoration:none;
+}
+
+.indented {
+	margin-left: 2em;
+}
+
+.comment {
+	position:relative;
+	margin: 1em 0;
+	padding-left: 12em;
+}
+.comment .commentnum {
+	float:right;
+}
+.comment .meta {
+	position:absolute;
+	top:0;
+	left:0;
+	width:10em;
+}
+.comment .meta span {
+	display:block;
+	padding-left: 16px;
+}
+.comment .subject {
+	margin:0 0 .4em;
+}
+.comment .content {}
+.comment .links {}
+.comment .links .forum_topic {
+	display:none;
+}
+
+.comment-dont-reply {
+	opacity:.6;
+}
+.comment-on-reply {
+	opacity:1;
+}
+
+.loadedCommentForm {
+	margin: .6em 0 0;
+	padding: 0 0 1em 8em;
+	position:relative;
+}
+.loadedCommentForm .comment-user-name {
+	position:absolute;
+	top:0;
+	left:0;
+}
+.loadedCommentForm .content {}
+.loadedCommentForm .closeCommentForm {
+	position:absolute;
+	top:0;
+	right:0;
+	cursor: pointer;
+}
+
+#pagenav {
+	text-align:right;
+	background:#000;
+}
+
+#pagenav,
+#pagenav a {
+	color: #fff;
+	text-decoration:none;
+	line-height:2em;
+	padding:.8em;
+}
+
+#usernav {
+	position:absolute;
+	top:1.6em;
+	left:0;
+	width:100%;
+	height:3em;
+	margin: 0 auto;
+	text-align:right;
+	font-size:.9em;
+}
+
+#usernav menu {
+	margin:0;
+	padding:.5em 0;
+	list-style-type:none;
+	float:right;
+}
+
+#usernav li {
+	margin:0 1em 0 0;
+	padding:0;
+	float:left;
+	position:relative;
+}
+
+#searchform label {
+	display:none;
+}
+
+.pagehead #user-login {
+	position:absolute;
+	top:1.5em;
+	right:-10em;
+	width:25em;
+	background:#fff;
+	border:1px solid #000;
+	text-align:left;
+	margin:0;
+	padding: .8em;
+	z-index:10;
+	visibility: visible;
+}
+
+.node {
+	clear:both;
+}
+.node .meta .share {
+	float:right;
+	width: 10em;
+	text-align:right;
+}
+
+.node .tags {
+	display:none;
+}
+
+.block-bookreview .content {
+	overflow:hidden;
+}
+.block-bookreview .attach-file {
+	float:left;
+	width:48%;
+}
+
+/* end */

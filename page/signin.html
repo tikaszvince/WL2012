@@ -1,0 +1,24 @@
+<form action="/tagok/regisztracio" accept-charset="UTF-8" method="post" id="user-register">
+<div><p>A regisztrációval elfogadod, hogy az <a href="/weblabor/adatvedelem">adatkezelésre vonatkozó eljárásaink</a> rád is vonatkoznak, megjelentett tartalmaid a <a href="/weblabor/joginyilatkozat">jogi nyilatkozatunknak</a> megfelelően kerülnek publikálásra.</p>
+<div class="form-item" id="edit-name-wrapper">
+ <label for="edit-name">Felhasználói név: <span class="form-required" title="Szükséges mező.">*</span></label>
+ <input type="text" maxlength="60" name="name" id="edit-name" size="60" value="" class="form-text required">
+ <div class="description">Írásjelek a pont, kötőjel, aláhúzás és a szóközök kivételével nem megengedettek.</div>
+</div>
+<div class="form-item" id="edit-mail-wrapper">
+ <label for="edit-mail">Email cím: <span class="form-required" title="Szükséges mező.">*</span></label>
+ <input type="text" maxlength="64" name="mail" id="edit-mail" size="60" value="" class="form-text required">
+ <div class="description">Egy működő email cím. A rendszer minden levelet erre a címre fog küldeni. Ez az email cím nem jelenik meg nyilvánosan, és csak új jelszó kérésnél, illetve feliratkozást igénylő szolgáltatásoknál kerül felhasználásra.</div>
+</div>
+<input type="hidden" name="form_build_id" id="form-4de680d3419073d9f636e1044815839c" value="form-4de680d3419073d9f636e1044815839c">
+<input type="hidden" name="form_id" id="edit-user-register" value="user_register">
+<fieldset class="captcha"><legend>CAPTCHA</legend><div class="description">A kérdés azt vizsgálja, hogy valós látogató, vagy robot szeretné az űrlapot beküldeni.</div><input type="hidden" name="captcha_sid" id="edit-captcha-sid" value="221979">
+<div class="form-item" id="edit-captcha-response-wrapper">
+ <label for="edit-captcha-response">Matematikai kérdés: <span class="form-required" title="Szükséges mező.">*</span></label>
+ <span class="field-prefix">3 + 0 = </span> <input type="text" maxlength="2" name="captcha_response" id="edit-captcha-response" size="4" value="" class="form-text required">
+ <div class="description">A fenti művelet eredményét kell beírni. Pl.: 1+3 esetén 4-et.</div>
+</div>
+</fieldset>
+<input type="submit" name="op" id="edit-submit" value="Felhasználó létrehozása" class="form-submit">
+
+</div></form>
