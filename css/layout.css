@@ -30,17 +30,18 @@
 	position:relative;
 	margin: 1em 0;
 	padding-left: 12em;
+	min-height:5em;
 }
 .comment .commentnum {
 	float:right;
 }
-.comment .meta {
+.meta {
 	position:absolute;
 	top:0;
 	left:0;
 	width:10em;
 }
-.comment .meta span {
+.meta span {
 	display:block;
 	padding-left: 16px;
 }
@@ -58,6 +59,63 @@
 }
 .comment-on-reply {
 	opacity:1;
+}
+
+.comment .score-widget {
+	position: absolute;
+	left: 18px;
+	width: 8em;
+	height: 2em;
+	top: 3em;
+}
+
+.comment .score-widget span.element-invisible {
+	display:none;
+	visibility:hidden;
+}
+.comment .score-widget .score {
+	display:block;
+	float:left;
+	height:100%;
+	width:40%;
+	margin: 0;
+	position:relative;
+	opacity:.5;
+}
+.comment .score:hover {
+	opacity:1;
+}
+.comment .score a {
+	margin:0;
+	padding:0;
+	display:block;
+	float:left;
+	width:100%;
+	height:100%;
+	background: transparent url(../img/up_arrow.png) no-repeat top left;
+}
+.comment .score a span {
+	
+}
+
+.comment .score .current-score {
+	font-size:1.4em;
+	display:block;
+	font-weight:bold;
+	position:absolute;
+	top:0;
+	right:0;
+	height:100%;
+}
+
+.comment .score-widget .up-score {
+	float:left;
+}
+.comment .score-widget .down-score {
+	float:right;
+}
+.comment .score-widget .down-score a {
+	background-image: url(../img/down_arrow.png);
 }
 
 .loadedCommentForm {
@@ -136,11 +194,16 @@
 
 .node {
 	clear:both;
+	position:relative;
+	padding: 0 0 0 12em;
+	min-height:8em;
 }
 .node .meta .share {
 	float:right;
 	width: 10em;
-	text-align:right;
+}
+.node .meta .share .links {
+	margin: .5em 0 0 18px;
 }
 
 .node .tags {

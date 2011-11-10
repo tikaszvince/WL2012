@@ -3,16 +3,16 @@ jQuery(document).ready(function($){
 		ev.preventDefault();
 		$('#user-login').slideToggle();
 	});
-
-	$('.comment .comment_reply a').click(function(ev){
-		ev.preventDefault();
+	
+	function showCommentForm(clicked, replyTo) {
 		$('.loadedCommentForm').slideUp('fast');
-		var clicked = $(this);
-		var replyTo = clicked.parents('.comment:first');
 		var commentForm = $('.loadedCommentForm', replyTo);
-		clicked.addClass('loading');
 		$('.comment').addClass('comment-dont-reply');
-		replyTo.addClass('comment-on-reply');
+		$('.comment-on-reply').removeClass('comment-on-reply');
+		clicked.addClass('loading');
+		replyTo
+			.removeClass('comment-dont-reply')
+			.addClass('comment-on-reply');
 		$.get(baseUrl + '/brick/commentform.html',function(data){
 			if ( !commentForm.length ) {
 				replyTo.append( '<div style="display:none;" class="loadedCommentForm" />' );
@@ -24,11 +24,27 @@ jQuery(document).ready(function($){
 			commentForm.slideDown();
 			clicked.removeClass('loading');
 		});
+	}
+
+	$('.comment .comment_reply a, .comment_add a, .comment_comments a').click(function(ev){
+		if (
+			$(this).hasClass('comment_reply')
+			|| $('.node').length == 1
+		) {
+			ev.preventDefault();
+			var replyTo = $(this).parent().hasClass('comment_reply')
+				? $(this).parents('.comment:first')
+				: $('.node');
+			showCommentForm( $(this), replyTo);
+		}
 	});
 	$('.closeCommentForm').live('click',function(){
 		$('.loadedCommentForm').slideUp('fast');
 		$('.comment').removeClass('comment-dont-reply');
 	});
+	if ( document.location.hash == '#comment-form' ) {
+		$('.comment_add a, .comment_comments a').click();
+	}
 
 	$('.retweet a').live('click', function(ev){
 		console.log(this.href);
