@@ -218,4 +218,10 @@
 	width:48%;
 }
 
+#tracker td {
+	vertical-align:top;
+}
+.typemarker {}
+.typemarker img {}
+
 /* end */

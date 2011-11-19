@@ -42,6 +42,8 @@ switch( true ) {
 		$title = 'Fórumok'; $page = 'forumtema.html'; break;
 	case preg_match('#^/forumok/#', $requestUri ):
 		$title = 'Fórumok'; $page = 'forumtemak.html'; break;
+	case preg_match('#^/tagok/\d+$#', $requestUri ):
+		$title = 'tiku'; $page = 'tagadatlap.html'; break;
 	default:
 		$dumpURI = true;
 		$title = 'Nem található!'; $page = '404.html'; break;
